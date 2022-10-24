@@ -80,9 +80,42 @@
   ```
 - Sign binaries
   ```
-  gpg -a -b okd-scos-${RELEASE}/sha256sum.txt
+  gpg --default-key maintainers@okd.io --armor --detach-sign okd-scos-${RELEASE}/sha256sum.txt
   ```
-- Upload to GitHub
+  Verify the signature
+  ```
+  gpg --verify okd-scos-${RELEASE}/sha256sum.txt.asc okd-scos-${RELEASE}/sha256sum.txt
+  ```
+- Create new release on https://github.com/okd-project/okd-scos/
+  - Upload contents of the `okd-scos-${RELEASE}` directory
+  - Add the following description:
+    ````
+    Client tools for OKD/SCOS
+    -------------------------
+
+    These archives contain the client tooling for [OKD on CentOS Stream CoreOS](https://docs.okd.io).
+
+    To verify the contents of this directory, use the 'gpg' and 'shasum' tools to
+    ensure the archives you have downloaded match those published from this location.
+
+    The openshift-install binary has been preconfigured to install the following release:
+
+    ```
+    <Output of `oc adm release info --pullspecs quay.io/okd/scos-release:${RELEASE}`>
+    ```
+    ````
+
+- For now, manually replace the line starting with `machine-os` under `Component Versions:`
+  specifying the OS version in the output above which currently still points to the FCOS machine-os-content
+  that is also present in the payload (although unused), with the `$PRETTY_NAME` of SCOS' `/etc/os-release`:
+    
+    ```
+    $ podman run -it --rm --entrypoint bash $(oc adm release info --image-for=centos-stream-coreos-9 quay.io/okd/scos-release:${RELEASE})
+    bash-5.1# source /etc/os-release 
+    bash-5.1# echo $PRETTY_NAME
+    CentOS Stream CoreOS 412.9.202210211543-0
+    ```
+
 
 ## Notify community
 - Include links to GitHub release and OKD/SCOS release status page
